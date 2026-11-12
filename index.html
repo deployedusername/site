@@ -14,6 +14,8 @@
             --text-main: #ffffff;
             --text-muted: #9ba3af;
             --tg-color: #229ed9;
+            --btn-cancel: #2d333b;
+            --btn-cancel-hover: #373e47;
         }
 
         * {
@@ -85,6 +87,9 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 15px;
+            cursor: pointer;
+            border: none;
+            width: 100%;
             transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
         }
 
@@ -141,6 +146,97 @@
             opacity: 0.8;
             margin-top: 1px;
         }
+
+        /* Стили модального окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 26px 22px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            text-align: center;
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--da-orange);
+            margin-bottom: 12px;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.55;
+            color: #d1d5db;
+            margin-bottom: 22px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px 10px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-cancel {
+            background-color: var(--btn-cancel);
+            color: #e5e7eb;
+        }
+
+        .btn-cancel:hover {
+            background-color: var(--btn-cancel-hover);
+        }
+
+        .btn-confirm {
+            background-color: var(--da-orange);
+            color: #ffffff;
+        }
+
+        .btn-confirm:hover {
+            background-color: var(--da-orange-hover);
+        }
     </style>
 </head>
 <body>
@@ -152,7 +248,7 @@
 
     <div class="links-group">
         <!-- Кнопка DonationAlerts -->
-        <a href="https://dalink.to/deployedyourself" target="_blank" rel="noopener noreferrer" class="widget-btn btn-da">
+        <button type="button" class="widget-btn btn-da" id="openDaModal">
             <svg viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/>
             </svg>
@@ -160,10 +256,10 @@
                 <span>DonationAlerts</span>
                 <span class="small">Отправить донат через DALink</span>
             </div>
-        </a>
+        </button>
 
         <!-- Кнопка Telegram -->
-        <a href="https://t.me" target="_blank" rel="noopener noreferrer" class="widget-btn btn-tg">
+        <a href="tg://resolve?domain=anonymnoekazino" class="widget-btn btn-tg" id="tgLink">
             <svg viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
             </svg>
@@ -174,6 +270,63 @@
         </a>
     </div>
 </div>
+
+<!-- Модальное окно подтверждения -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+        <div class="modal-title">Важное напоминание</div>
+        <div class="modal-body">
+            В анонимном донате укажите ваш <b>Username в Telegram</b>, а также что жертвуете в центр помощи бездомным животным <b>«Любимец» Город Тула</b>.
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="modal-btn btn-cancel" id="modalCancel">Отмена</button>
+            <button type="button" class="modal-btn btn-confirm" id="modalConfirm">Хорошо, я прочитал(а)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const openBtn = document.getElementById('openDaModal');
+    const overlay = document.getElementById('modalOverlay');
+    const cancelBtn = document.getElementById('modalCancel');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const tgLink = document.getElementById('tgLink');
+
+    // Открытие модального окна
+    openBtn.addEventListener('click', () => {
+        overlay.classList.add('active');
+    });
+
+    // Кнопка «Отмена» — закрывает окно и оставляет на главной
+    cancelBtn.addEventListener('click', () => {
+        overlay.classList.remove('active');
+    });
+
+    // Закрытие при клике по фону
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.classList.remove('active');
+        }
+    });
+
+    // Кнопка «Хорошо, я прочитал(а)» — переход на DonationAlerts
+    confirmBtn.addEventListener('click', () => {
+        window.open('https://dalink.to/deployedyourself', '_blank');
+        overlay.classList.remove('active');
+    });
+
+    // Надежный переход в Telegram: если приложение не открывается, открыть web-версию
+    tgLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const appUrl = 'tg://resolve?domain=anonymnoekazino';
+        const webUrl = 'https://t.me';
+
+        window.location.href = appUrl;
+        setTimeout(() => {
+            window.open(webUrl, '_blank');
+        }, 1200);
+    });
+</script>
 
 </body>
 </html>
